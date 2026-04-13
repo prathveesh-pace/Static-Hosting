@@ -2,3 +2,4 @@
 
 TODO: Document your project here
 # Static-Hosting
+Use Port 80
