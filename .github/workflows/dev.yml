@@ -25,7 +25,7 @@ jobs:
 
       - name: Rsync source to server & Docker Build
         run: |
-          echo "Deploying to https://landing.rezize.com
+          echo "Deploying to https://landing.rezize.com"
           sudo rsync -ravz --exclude '.git/' ./ $CODE_DIR/
           sudo docker compose -f $STACK_FILE build --no-cache
 
