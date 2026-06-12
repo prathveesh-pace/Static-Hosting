@@ -16,7 +16,7 @@ jobs:
 
   dev-build:
     name: Build (Development)
-    runs-on: rock8dev
+    runs-on: devopsworkshop
     if: github.ref_name == 'dev'
 
     steps:
@@ -32,7 +32,7 @@ jobs:
 
   dev-deploy:
     name: Deploy (Development)
-    runs-on: rock8dev
+    runs-on: devopsworkshop
     needs: dev-build
     if: github.ref_name == 'dev'
 
