@@ -26,8 +26,8 @@ jobs:
       - name: Rsync source to server & Docker Build
         run: |
           echo "Deploying to https://landing.rezize.com"
-          sudo rsync -ravz --exclude '.git/' ./ $CODE_DIR/
-          sudo docker compose -f $STACK_FILE build --no-cache
+          rsync -ravz --exclude '.git/' ./ $CODE_DIR/
+          docker compose -f $STACK_FILE build --no-cache
 
 
   dev-deploy:
@@ -43,5 +43,5 @@ jobs:
       - name: Docker Deploy
         run: |
           echo "Starting Deployment..."
-          sudo docker compose -f $STACK_FILE up -d
-          sudo docker exec proxy_server nginx -s reload || echo "Failed to reload Nginx"
+          docker compose -f $STACK_FILE up -d
+          docker exec proxy_server nginx -s reload || echo "Failed to reload Nginx"
