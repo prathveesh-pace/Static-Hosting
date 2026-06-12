@@ -1,0 +1,47 @@
+name: DevOps-Landing
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+env:
+  STACK_FILE: /home/ubuntu/docker/rock8.ai/dev/docker-compose.yml
+  CODE_DIR: /home/ubuntu/docker/rock8.ai/dev/app/code
+
+jobs:
+
+  dev-build:
+    name: Build (Development)
+    runs-on: rock8dev
+    if: github.ref_name == 'dev'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Rsync source to server & Docker Build
+        run: |
+          echo "Deploying to https://jmw.rock8.ai/"
+          sudo rsync -ravz --exclude '.git/' ./ $CODE_DIR/
+          sudo docker compose -f $STACK_FILE build --no-cache
+
+
+  dev-deploy:
+    name: Deploy (Development)
+    runs-on: rock8dev
+    needs: dev-build
+    if: github.ref_name == 'dev'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Docker Deploy
+        run: |
+          echo "Starting Deployment..."
+          sudo docker compose -f $STACK_FILE up -d
+          sudo docker exec proxy_server nginx -s reload || echo "Failed to reload Nginx"
