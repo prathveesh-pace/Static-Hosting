@@ -1,0 +1,9 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: static-hosting
+    ports:
+      - "80:80"
+    restart: unless-stopped
