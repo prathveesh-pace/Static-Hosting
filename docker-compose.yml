@@ -1,7 +1,7 @@
 services:
   web:
     build:
-      context: .
+      context: app/
       dockerfile: Dockerfile
     container_name: static-hosting
     ports:
