@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevOps Workshop</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    :root {
+      --cyan: #22D3EE;
+      --green: #34D399;
+      --blue: #2563EB;
+      --docker: #0EA5E9;
+      --purple: #818CF8;
+      --violet: #A78BFA;
+      --amber: #FBBF24;
+      --bg: #080D1A;
+      --surface: #0F1629;
+      --border: rgba(255, 255, 255, 0.07);
+    }
+
+    body {
+      background: var(--bg);
+      color: #F8FAFC;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    #canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 40px 80px;
+    }
+
+    .above-fold {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 60px 0;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      margin-bottom: 72px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #475569;
+      border: 1px solid #1E293B;
+      border-radius: 100px;
+      padding: 6px 16px;
+      margin-bottom: 28px;
+    }
+
+    .hero-eyebrow span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: .4;
+        transform: scale(.7)
+      }
+    }
+
+    .hero h1 {
+      font-size: clamp(48px, 7vw, 88px);
+      font-weight: 900;
+      letter-spacing: -3px;
+      line-height: 1;
+      background: linear-gradient(135deg, #F8FAFC 0%, var(--cyan) 40%, var(--purple) 70%, #F8FAFC 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-size: 200%;
+      animation: gradShift 6s ease infinite;
+    }
+
+    @keyframes gradShift {
+
+      0%,
+      100% {
+        background-position: 0%
+      }
+
+      50% {
+        background-position: 100%
+      }
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: #475569;
+      margin-top: 20px;
+      font-weight: 300;
+      letter-spacing: 1px;
+    }
+
+    /* ── PORTAL GRID ── */
+    .portals {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      max-width: 1100px;
+      width: 100%;
+    }
+
+    .portal {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 32px 32px;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: border-color .35s ease, box-shadow .35s ease;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      will-change: transform;
+    }
+
+    .portal::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      background: var(--glow-bg);
+      opacity: 0;
+      transition: opacity .4s;
+    }
+
+    .portal:hover::after {
+      opacity: 1;
+    }
+
+    .portal-cyan {
+      --accent: var(--cyan);
+      --glow: #22D3EE22;
+      --glow-bg: radial-gradient(ellipse 100% 60% at 50% 0%, rgba(34, 211, 238, .12), transparent 70%);
+    }
+
+    .portal-blue {
+      --accent: #3B82F6;
+      --glow: #3B82F622;
+      --glow-bg: radial-gradient(ellipse 100% 60% at 50% 0%, rgba(59, 130, 246, .14), transparent 70%);
+    }
+
+    .portal-docker {
+      --accent: var(--docker);
+      --glow: #0EA5E922;
+      --glow-bg: radial-gradient(ellipse 100% 60% at 50% 0%, rgba(14, 165, 233, .13), transparent 70%);
+    }
+
+    .portal:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--glow), 0 24px 64px rgba(0, 0, 0, .5), 0 0 40px var(--glow);
+    }
+
+    /* slide count badge */
+    .badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid #1E293B;
+      border-radius: 100px;
+      padding: 3px 11px;
+      z-index: 2;
+    }
+
+    /* portal icon */
+    .p-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, .06);
+      position: relative;
+      z-index: 2;
+      transition: transform .3s ease;
+    }
+
+    .portal:hover .p-icon {
+      transform: scale(1.08) rotate(-4deg);
+    }
+
+    .p-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .p-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #F8FAFC;
+      margin-bottom: 8px;
+      line-height: 1.2;
+      position: relative;
+      z-index: 2;
+    }
+
+    .p-desc {
+      font-size: 14px;
+      color: #64748B;
+      margin-bottom: 24px;
+      line-height: 1.6;
+      position: relative;
+      z-index: 2;
+      flex: 1;
+    }
+
+    /* topic chips */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .chip {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 11px;
+      border-radius: 100px;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, .08);
+      color: #94A3B8;
+      transition: all .25s;
+    }
+
+    .portal:hover .chip {
+      border-color: rgba(255, 255, 255, .15);
+      color: #CBD5E1;
+    }
+
+    /* enter button */
+    .p-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      padding: 11px 22px;
+      border-radius: 10px;
+      border: none;
+      color: #08101E;
+      background: var(--accent);
+      cursor: pointer;
+      transition: all .3s ease;
+      position: relative;
+      z-index: 2;
+      width: fit-content;
+      font-family: inherit;
+    }
+
+    .portal:hover .p-btn {
+      gap: 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+    }
+
+    /* orbit ring decoration */
+    .ring {
+      position: absolute;
+      bottom: -60px;
+      right: -60px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 1px solid var(--accent);
+      opacity: .06;
+      transform: scale(1);
+      transition: transform .5s ease, opacity .5s ease;
+    }
+
+    .ring-2 {
+      position: absolute;
+      bottom: -80px;
+      right: -80px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      border: 1px solid var(--accent);
+      opacity: .03;
+    }
+
+    .portal:hover .ring {
+      transform: scale(1.4);
+      opacity: .12;
+    }
+
+    /* divider shimmer */
+    .shimmer {
+      height: 1px;
+      background: #1E293B;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+      z-index: 2;
+    }
+
+    .shimmer::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 60%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      transition: left .7s ease;
+    }
+
+    .portal:hover .shimmer::after {
+      left: 150%;
+    }
+
+    /* ── PRESENTER CARD ── */
+    .presenter-card {
+      margin-top: 64px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      max-width: 360px;
+      width: 100%;
+      opacity: 0;
+      animation: floatIn .6s .65s forwards;
+    }
+
+    .presenter-photo {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(34,211,238,.3);
+    }
+
+    .presenter-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: #F8FAFC;
+      text-align: center;
+    }
+
+    .presenter-title {
+      font-size: 13px;
+      color: #64748B;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .presenter-qr {
+      width: 260px;
+      height: 260px;
+      border-radius: 12px;
+      object-fit: contain;
+      background: #fff;
+      padding: 8px;
+    }
+
+    .linkedin-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      padding: 11px 24px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #fff;
+      background: #0A66C2;
+      transition: background .25s ease, box-shadow .25s ease;
+    }
+
+    .linkedin-btn:hover {
+      background: #0856A4;
+      box-shadow: 0 8px 24px rgba(10,102,194,.4);
+    }
+
+    .linkedin-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: #fff;
+      flex-shrink: 0;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: 64px;
+      text-align: center;
+      color: #1E293B;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+
+    /* ── ENTRANCE ANIMATION ── */
+    .portal {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: floatIn .6s forwards;
+    }
+
+    .portal:nth-child(1) {
+      animation-delay: .2s;
+    }
+
+    .portal:nth-child(2) {
+      animation-delay: .35s;
+    }
+
+    .portal:nth-child(3) {
+      animation-delay: .5s;
+    }
+
+    @keyframes floatIn {
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .hero {
+      opacity: 0;
+      animation: floatIn .6s .05s forwards;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="canvas"></canvas>
+
+  <div class="page">
+    <div class="above-fold">
+    <div class="hero">
+      <div class="hero-eyebrow"><span></span>College Tech Workshop Series</div>
+      <h1>DevOps Workshop</h1>
+    </div>
+
+    <div class="portals">
+
+      <!-- Portal 1 -->
+      <a href="devops-workshop.html" class="portal portal-cyan">
+        <span class="badge">8 slides</span>
+        <div class="ring"></div>
+        <div class="ring-2"></div>
+        <div class="p-icon">🚀</div>
+        <div class="p-tag">Workshop Series</div>
+        <h2 class="p-title">DevOps Workshop</h2>
+        <div class="chips">
+          <span class="chip">Docker</span>
+          <span class="chip">Static Hosting</span>
+          <span class="chip">CI / CD</span>
+          <span class="chip">AWS Agent</span>
+        </div>
+        <div class="shimmer"></div>
+        <button class="p-btn">Launch Workshop &nbsp;→</button>
+      </a>
+
+      <!-- Portal 2 -->
+      <a href="devops-daily.html" class="portal portal-blue">
+        <span class="badge">8 slides</span>
+        <div class="ring"></div>
+        <div class="ring-2"></div>
+        <div class="p-icon">⚡</div>
+        <div class="p-tag">Career Guide</div>
+        <h2 class="p-title">DevOps Task</h2>
+        <div class="chips">
+          <span class="chip">Monitoring</span>
+          <span class="chip">IaC</span>
+          <span class="chip">Security</span>
+          <span class="chip">Career Path</span>
+        </div>
+        <div class="shimmer"></div>
+        <button class="p-btn">Explore the Day &nbsp;→</button>
+      </a>
+
+      <!-- Portal 3 -->
+      <a href="docker-workshop.html" class="portal portal-docker">
+        <span class="badge">10 slides</span>
+        <div class="ring"></div>
+        <div class="ring-2"></div>
+        <div class="p-icon">🐳</div>
+        <div class="p-tag">Technical Deep Dive</div>
+        <h2 class="p-title">Docker Workshop</h2>
+        <div class="chips">
+          <span class="chip">Containers</span>
+          <span class="chip">Dockerfile</span>
+          <span class="chip">Compose</span>
+          <span class="chip">Registries</span>
+        </div>
+        <div class="shimmer"></div>
+        <button class="p-btn">Start Containers &nbsp;→</button>
+      </a>
+
+    </div>
+    </div>
+
+    <div class="presenter-card">
+      <img class="presenter-photo" src="profile.jpeg" alt="Prathveesh Naik"
+        onerror="this.style.display='none'">
+      <div class="presenter-name">Prathveesh Naik</div>
+<img class="presenter-qr" src="linkedin-qr.jpeg" alt="LinkedIn QR Code"
+        onerror="this.style.display='none'">
+      <a class="linkedin-btn" href="https://www.linkedin.com/in/prathveesh-naik-a52a2522a" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        Connect on LinkedIn
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    /* ── Particle canvas ── */
+    const C = document.getElementById('canvas');
+    const ctx = C.getContext('2d');
+    let W, H;
+    function resize() { W = C.width = innerWidth; H = C.height = innerHeight; }
+    resize(); addEventListener('resize', resize);
+
+    const N = 90, pts = [];
+    const COLORS = ['#22D3EE', '#818CF8', '#34D399', '#3B82F6', '#F8FAFC'];
+    for (let i = 0; i < N; i++) pts.push({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - .5) * .35, vy: (Math.random() - .5) * .35,
+      r: Math.random() * 1.5 + .5,
+      c: COLORS[i % COLORS.length],
+      a: Math.random() * .5 + .15
+    });
+
+    let mx = W / 2, my = H / 2;
+    addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+
+    (function tick() {
+      ctx.clearRect(0, 0, W, H);
+      for (let i = 0; i < N; i++) {
+        const p = pts[i];
+        /* slight mouse attraction */
+        const dx = mx - p.x, dy = my - p.y, d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 200) { p.vx += dx / d * .003; p.vy += dy / d * .003; }
+        p.vx *= .99; p.vy *= .99;
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+        /* dot */
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.c + (Math.floor(p.a * 255).toString(16).padStart(2, '0'));
+        ctx.fill();
+        /* lines */
+        for (let j = i + 1; j < N; j++) {
+          const q = pts[j];
+          const dx2 = p.x - q.x, dy2 = p.y - q.y, d2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+          if (d2 < 110) {
+            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+            ctx.strokeStyle = `rgba(148,163,184,${.12 * (1 - d2 / 110)})`;
+            ctx.lineWidth = .6; ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(tick);
+    })();
+
+    /* ── 3D tilt on cards ── */
+    document.querySelectorAll('.portal').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - .5;
+        const y = (e.clientY - r.top) / r.height - .5;
+        card.style.transform = `perspective(800px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateY(-10px) scale(1.01)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transition = 'transform .5s cubic-bezier(.175,.885,.32,1.275),border-color .35s,box-shadow .35s';
+        card.style.transform = 'perspective(800px) rotateY(0) rotateX(0) translateY(0) scale(1)';
+      });
+      card.addEventListener('mouseenter', () => {
+        card.style.transition = 'transform .15s ease,border-color .35s,box-shadow .35s';
+      });
+      /* portal click ripple */
+      card.addEventListener('click', e => {
+        e.preventDefault();
+        const href = card.getAttribute('href');
+        card.style.transform = 'perspective(800px) scale(.97)';
+        setTimeout(() => { location.href = href; }, 200);
+      });
+    });
+  </script>
+</body>
+
+</html>
